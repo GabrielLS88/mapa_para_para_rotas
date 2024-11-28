@@ -12,25 +12,35 @@ destino = (-22.906847, -43.172896)  # Rio de Janeiro
 client = openrouteservice.Client(key=API_KEY)
 
 # Solicitar rota
-rota = client.directions(
-    coordinates=[origem[::-1], destino[::-1]],
-    profile='driving-car',  # Pode ser 'walking', 'cycling', etc.
-    format='geojson'
-)
+try:
+    rota = client.directions(
+        coordinates=[origem[::-1], destino[::-1]],
+        profile='driving-car',  # Pode ser 'walking', 'cycling', etc.
+        format='geojson'
+    )
 
-# Extraindo informações da rota
-distancia = rota['routes'][0]['summary']['distance'] / 1000  # Em km
-duracao = rota['routes'][0]['summary']['duration'] / 60  # Em minutos
-coordenadas_rota = rota['routes'][0]['geometry']
+    # Verificar se 'routes' existe na resposta
+    if 'routes' in rota and len(rota['routes']) > 0:
+        # Extraindo informações da rota
+        distancia = rota['routes'][0]['summary']['distance'] / 1000  # Em km
+        duracao = rota['routes'][0]['summary']['duration'] / 60  # Em minutos
+        coordenadas_rota = rota['routes'][0]['geometry']
 
-print(f"Distância: {distancia:.2f} km")
-print(f"Duração: {duracao:.2f} minutos")
+        # Exibir informações sobre a rota
+        print(f"Distância: {distancia:.2f} km")
+        print(f"Duração: {duracao:.2f} minutos")
+    else:
+        print("Erro: A resposta da API não contém informações sobre rotas.")
+
+except Exception as e:
+    print(f"Erro ao solicitar a rota: {e}")
 
 # Criar mapa centralizado na origem
 mapa = folium.Map(location=origem, zoom_start=6)
 
-# Adicionar a rota ao mapa
-folium.GeoJson(coordenadas_rota).add_to(mapa)
+# Adicionar a rota ao mapa, se existir
+if 'coordenadas_rota' in locals():
+    folium.GeoJson(coordenadas_rota).add_to(mapa)
 
 # Adicionar marcadores
 folium.Marker(origem, tooltip="Origem (São Paulo)").add_to(mapa)
